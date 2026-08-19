@@ -44,6 +44,10 @@ pip install flagstack
 
 Publishing and compatibility details will be documented once the initial SDK is implemented.
 
+## Contributing
+
+Organisation-wide contribution guidelines are maintained in [`flagstack/.github`](https://github.com/flagstack/.github). FlagStack uses a linear Git history and integrates pull requests by rebase only.
+
 ## Related repositories
 
 - [FlagStack](https://github.com/flagstack/flagstack)
@@ -51,6 +55,6 @@ Publishing and compatibility details will be documented once the initial SDK is 
 - [Go SDK](https://github.com/flagstack/sdk-go)
 - [.NET SDK](https://github.com/flagstack/sdk-dotnet)
 
-## License
+## Licence
 
-A license will be selected before the first public release.
+This SDK is licensed under the **Apache License 2.0**. See [`LICENSE`](LICENSE).
