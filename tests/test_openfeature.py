@@ -12,7 +12,7 @@ from openfeature.event import ProviderEvent
 from openfeature.exception import ErrorCode
 from openfeature.flag_evaluation import Reason
 
-from flagstack.openfeature import FlagStackProvider
+from switchonyourcode.openfeature import SwitchOnYourCodeProvider
 
 
 def configuration(*, revision: int = 1, enabled: bool = True) -> dict[str, object]:
@@ -84,12 +84,12 @@ class OpenFeatureProviderTests(unittest.TestCase):
 
     def test_provider_integrates_with_openfeature_api(self) -> None:
         with patch(
-            "flagstack.client.urllib.request.urlopen",
+            "switchonyourcode.client.urllib.request.urlopen",
             return_value=FakeResponse(configuration(), etag='"config-1"'),
         ):
-            provider = FlagStackProvider(
+            provider = SwitchOnYourCodeProvider(
                 base_url="https://flags.example.com",
-                server_key="fs_server_test",
+                server_key="syoc_server_test",
                 start_polling=False,
             )
             api.set_provider_and_wait(provider)
@@ -108,18 +108,18 @@ class OpenFeatureProviderTests(unittest.TestCase):
         self.assertTrue(details.value)
         self.assertEqual(details.reason, Reason.TARGETING_MATCH)
         self.assertEqual(details.variant, "on")
-        self.assertEqual(details.flag_metadata["flagstack.environment"], "production")
-        self.assertEqual(details.flag_metadata["flagstack.revision"], 1)
-        self.assertEqual(details.flag_metadata["flagstack.rule_id"], "release-time")
+        self.assertEqual(details.flag_metadata["switchonyourcode.environment"], "production")
+        self.assertEqual(details.flag_metadata["switchonyourcode.revision"], 1)
+        self.assertEqual(details.flag_metadata["switchonyourcode.rule_id"], "release-time")
 
     def test_integer_resolution_rejects_non_integral_number(self) -> None:
         with patch(
-            "flagstack.client.urllib.request.urlopen",
+            "switchonyourcode.client.urllib.request.urlopen",
             return_value=FakeResponse(configuration(), etag='"config-1"'),
         ):
-            provider = FlagStackProvider(
+            provider = SwitchOnYourCodeProvider(
                 base_url="https://flags.example.com",
-                server_key="fs_server_test",
+                server_key="syoc_server_test",
                 start_polling=False,
             )
             provider.initialize(EvaluationContext())
@@ -140,12 +140,12 @@ class OpenFeatureProviderTests(unittest.TestCase):
         events: list[tuple[ProviderEvent, list[str] | None]] = []
 
         with patch(
-            "flagstack.client.urllib.request.urlopen",
+            "switchonyourcode.client.urllib.request.urlopen",
             side_effect=lambda *_args, **_kwargs: next(responses),
         ):
-            provider = FlagStackProvider(
+            provider = SwitchOnYourCodeProvider(
                 base_url="https://flags.example.com",
-                server_key="fs_server_test",
+                server_key="syoc_server_test",
                 start_polling=False,
             )
             provider.attach(lambda _provider, event, details: events.append((event, details.flags_changed)))

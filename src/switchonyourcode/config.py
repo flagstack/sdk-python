@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, cast
 
-from .errors import FlagStackConfigurationError
+from .errors import SwitchOnYourCodeConfigurationError
 from .types import (
     SCHEMA_VERSION,
     Allocation,
@@ -23,20 +23,20 @@ from .validation import validate_evaluation_configuration
 
 
 def parse_configuration(payload: object) -> Configuration:
-    root = _record(payload, "FlagStack configuration must be an object.")
+    root = _record(payload, "SwitchOnYourCode configuration must be an object.")
     if root.get("schema_version") != SCHEMA_VERSION:
-        raise FlagStackConfigurationError(
-            f"Unsupported FlagStack schema version {root.get('schema_version')!r}."
+        raise SwitchOnYourCodeConfigurationError(
+            f"Unsupported SwitchOnYourCode schema version {root.get('schema_version')!r}."
         )
 
-    environment_raw = _record(root.get("environment"), "FlagStack configuration environment is invalid.")
-    environment_id = _non_empty_string(environment_raw.get("id"), "FlagStack environment id is invalid.")
-    environment_key = _non_empty_string(environment_raw.get("key"), "FlagStack environment key is invalid.")
+    environment_raw = _record(root.get("environment"), "SwitchOnYourCode configuration environment is invalid.")
+    environment_id = _non_empty_string(environment_raw.get("id"), "SwitchOnYourCode environment id is invalid.")
+    environment_key = _non_empty_string(environment_raw.get("key"), "SwitchOnYourCode environment key is invalid.")
 
     flags_raw = root.get("flags")
     segments_raw = root.get("segments")
     if not isinstance(flags_raw, list) or not isinstance(segments_raw, list):
-        raise FlagStackConfigurationError("FlagStack configuration flags and segments must be arrays.")
+        raise SwitchOnYourCodeConfigurationError("SwitchOnYourCode configuration flags and segments must be arrays.")
 
     configuration = Configuration(
         schema_version=SCHEMA_VERSION,
@@ -47,8 +47,8 @@ def parse_configuration(payload: object) -> Configuration:
     try:
         validate_evaluation_configuration(configuration)
     except Exception as exc:
-        raise FlagStackConfigurationError(
-            f"FlagStack configuration is not compatible with the v1 evaluator: {exc}"
+        raise SwitchOnYourCodeConfigurationError(
+            f"SwitchOnYourCode configuration is not compatible with the v1 evaluator: {exc}"
         ) from exc
     return configuration
 
@@ -59,24 +59,24 @@ def _parse_flag(value: object) -> ConfigurationFlag:
     key = _non_empty_string(data.get("key"), "Flag entry is missing a valid key.")
     kind = data.get("kind")
     if kind not in {"boolean", "string", "number", "json"}:
-        raise FlagStackConfigurationError(f"Flag {key!r} has an invalid kind.")
+        raise SwitchOnYourCodeConfigurationError(f"Flag {key!r} has an invalid kind.")
     enabled = data.get("enabled")
     revision = data.get("revision")
     if not isinstance(enabled, bool) or isinstance(revision, bool) or not isinstance(revision, int) or revision < 0:
-        raise FlagStackConfigurationError(f"Flag {key!r} has invalid enabled state or revision.")
+        raise SwitchOnYourCodeConfigurationError(f"Flag {key!r} has invalid enabled state or revision.")
     if "default_value" not in data:
-        raise FlagStackConfigurationError(f"Flag {key!r} is missing default_value.")
+        raise SwitchOnYourCodeConfigurationError(f"Flag {key!r} is missing default_value.")
     variants_raw = data.get("variants")
     policy_raw = data.get("policy")
     if not isinstance(variants_raw, list) or not isinstance(policy_raw, Mapping):
-        raise FlagStackConfigurationError(f"Flag {key!r} has invalid variants or policy.")
+        raise SwitchOnYourCodeConfigurationError(f"Flag {key!r} has invalid variants or policy.")
 
     variants: list[Variant] = []
     for raw_variant in variants_raw:
         variant = _record(raw_variant, f"Flag {key!r} contains an invalid variant.")
         variant_key = _non_empty_string(variant.get("key"), f"Flag {key!r} contains an invalid variant.")
         if "value" not in variant:
-            raise FlagStackConfigurationError(f"Flag {key!r} contains an invalid variant.")
+            raise SwitchOnYourCodeConfigurationError(f"Flag {key!r} contains an invalid variant.")
         variants.append(Variant(key=variant_key, value=variant["value"]))
 
     return ConfigurationFlag(
@@ -94,7 +94,7 @@ def _parse_flag(value: object) -> ConfigurationFlag:
 def _parse_policy(value: Mapping[str, Any]) -> Policy:
     rules_raw = value.get("rules", [])
     if not isinstance(rules_raw, list):
-        raise FlagStackConfigurationError("Policy rules must be an array.")
+        raise SwitchOnYourCodeConfigurationError("Policy rules must be an array.")
     rules: list[Rule] = []
     for raw_rule in rules_raw:
         rule = _record(raw_rule, "Policy contains an invalid rule.")
@@ -103,10 +103,10 @@ def _parse_policy(value: Mapping[str, Any]) -> Policy:
         conditions_raw = rule.get("conditions")
         outcome_raw = rule.get("outcome")
         if match not in {"all", "any"} or not isinstance(conditions_raw, list) or not isinstance(outcome_raw, Mapping):
-            raise FlagStackConfigurationError("Policy contains an invalid rule.")
+            raise SwitchOnYourCodeConfigurationError("Policy contains an invalid rule.")
         name = rule.get("name")
         if name is not None and not isinstance(name, str):
-            raise FlagStackConfigurationError("Policy rule name must be a string.")
+            raise SwitchOnYourCodeConfigurationError("Policy rule name must be a string.")
         rules.append(
             Rule(
                 id=rule_id,
@@ -119,7 +119,7 @@ def _parse_policy(value: Mapping[str, Any]) -> Policy:
 
     fallthrough_raw = value.get("fallthrough", {})
     if not isinstance(fallthrough_raw, Mapping):
-        raise FlagStackConfigurationError("Policy fallthrough must be an object.")
+        raise SwitchOnYourCodeConfigurationError("Policy fallthrough must be an object.")
     return Policy(rules=tuple(rules), fallthrough=_parse_outcome(fallthrough_raw))
 
 
@@ -130,7 +130,7 @@ def _parse_segment(value: object) -> Segment:
     match = data.get("match")
     conditions_raw = data.get("conditions")
     if not isinstance(name, str) or match not in {"all", "any"} or not isinstance(conditions_raw, list):
-        raise FlagStackConfigurationError("Configuration contains an invalid segment.")
+        raise SwitchOnYourCodeConfigurationError("Configuration contains an invalid segment.")
     return Segment(
         key=key,
         name=name,
@@ -143,10 +143,10 @@ def _parse_condition(value: object) -> Condition:
     data = _record(value, "Configuration contains an invalid condition.")
     operator = data.get("operator")
     if not isinstance(operator, str):
-        raise FlagStackConfigurationError("Configuration contains an invalid condition.")
+        raise SwitchOnYourCodeConfigurationError("Configuration contains an invalid condition.")
     attribute = data.get("attribute")
     if attribute is not None and not isinstance(attribute, str):
-        raise FlagStackConfigurationError("Condition attribute must be a string.")
+        raise SwitchOnYourCodeConfigurationError("Condition attribute must be a string.")
     return Condition(
         operator=operator,
         attribute=attribute,
@@ -159,13 +159,13 @@ def _parse_outcome(value: Mapping[str, Any]) -> Outcome:
     variant = value.get("variant")
     bucket_by = value.get("bucket_by")
     if variant is not None and not isinstance(variant, str):
-        raise FlagStackConfigurationError("Outcome variant must be a string.")
+        raise SwitchOnYourCodeConfigurationError("Outcome variant must be a string.")
     if bucket_by is not None and not isinstance(bucket_by, str):
-        raise FlagStackConfigurationError("Outcome bucket_by must be a string.")
+        raise SwitchOnYourCodeConfigurationError("Outcome bucket_by must be a string.")
 
     rollout_raw = value.get("rollout", [])
     if not isinstance(rollout_raw, list):
-        raise FlagStackConfigurationError("Outcome rollout must be an array.")
+        raise SwitchOnYourCodeConfigurationError("Outcome rollout must be an array.")
     rollout: list[Allocation] = []
     for raw_allocation in rollout_raw:
         allocation = _record(raw_allocation, "Outcome contains an invalid rollout allocation.")
@@ -174,18 +174,18 @@ def _parse_outcome(value: Mapping[str, Any]) -> Outcome:
         )
         weight = allocation.get("weight")
         if isinstance(weight, bool) or not isinstance(weight, int):
-            raise FlagStackConfigurationError("Outcome contains an invalid rollout allocation.")
+            raise SwitchOnYourCodeConfigurationError("Outcome contains an invalid rollout allocation.")
         rollout.append(Allocation(variant=allocation_variant, weight=weight))
     return Outcome(variant=variant, rollout=tuple(rollout), bucket_by=bucket_by)
 
 
 def _record(value: object, message: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
-        raise FlagStackConfigurationError(message)
+        raise SwitchOnYourCodeConfigurationError(message)
     return cast(Mapping[str, Any], value)
 
 
 def _non_empty_string(value: object, message: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise FlagStackConfigurationError(message)
+        raise SwitchOnYourCodeConfigurationError(message)
     return value

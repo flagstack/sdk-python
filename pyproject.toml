@@ -3,16 +3,16 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flagstack"
+name = "switchonyourcode"
 version = "0.0.0"
-description = "Official Python SDK for FlagStack feature flags."
+description = "Official Python SDK for SwitchOnYourCode feature flags."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [
-  { name = "FlagStack" },
+  { name = "Switch On Your Code" },
 ]
-keywords = ["feature-flags", "feature-toggles", "flagstack"]
+keywords = ["feature-flags", "feature-toggles", "switchonyourcode"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
@@ -28,12 +28,12 @@ classifiers = [
 openfeature = ["openfeature-sdk>=0.10,<0.11"]
 
 [project.urls]
-Homepage = "https://github.com/flagstack/flagstack"
-Repository = "https://github.com/flagstack/sdk-python"
-Issues = "https://github.com/flagstack/sdk-python/issues"
+Homepage = "https://github.com/switchonyourcode/switchonyourcode"
+Repository = "https://github.com/switchonyourcode/sdk-python"
+Issues = "https://github.com/switchonyourcode/sdk-python/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-flagstack = ["py.typed"]
+switchonyourcode = ["py.typed"]
