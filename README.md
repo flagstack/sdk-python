@@ -8,7 +8,7 @@ The SDK downloads FlagStack schema-v1 configuration with a server SDK key and ev
 
 ## Requirements
 
-Python 3.11 or newer. The runtime SDK uses only the Python standard library.
+Python 3.11 or newer. The native runtime SDK uses only the Python standard library.
 
 ## Basic usage
 
@@ -69,7 +69,7 @@ It uses strong ETag revalidation. A `304 Not Modified` keeps the current in-memo
 
 ## Local evaluation
 
-The Python evaluator implements the same FlagStack v1 contract as the JavaScript SDK:
+The Python evaluator implements the same FlagStack v1 contract as the JavaScript SDK and Go control-plane evaluator:
 
 - boolean, string, number and JSON values;
 - ordered rules;
@@ -86,6 +86,8 @@ The compatibility vector is fixed:
 ```text
 bucket("env-1", "flag-1", "user-123") == 22683
 ```
+
+Custom scalar `bucket_by` attributes are serialized using the Go reference evaluator's JSON representation before hashing, so Python-specific number or string formatting does not move users between rollout cohorts.
 
 Python's built-in regex engine accepts constructs that RE2 does not. The SDK validates regex targeting against the RE2-compatible subset before compiling it, so Python cannot silently broaden the rule language.
 
@@ -108,10 +110,50 @@ print(details.rule_id)
 
 When the provider is not ready, a flag is missing, or the requested type does not match the flag, the SDK returns the caller-provided fallback and exposes the failure through the details object.
 
+## OpenFeature
+
+OpenFeature support is optional so the native `flagstack` install remains standard-library-only:
+
+```bash
+pip install "flagstack[openfeature]"
+```
+
+Register `FlagStackProvider` with the OpenFeature Python SDK:
+
+```python
+from openfeature import api
+from openfeature.evaluation_context import EvaluationContext
+from flagstack.openfeature import FlagStackProvider
+
+api.set_provider_and_wait(
+    FlagStackProvider(
+        base_url="https://flags.example.com",
+        server_key="fs_server_...",
+    )
+)
+
+client = api.get_client()
+
+enabled = client.get_boolean_value(
+    "new-checkout",
+    False,
+    EvaluationContext(
+        targeting_key="user-123",
+        attributes={"country": "GB", "plan": "enterprise"},
+    ),
+)
+```
+
+The provider maps FlagStack values, variants, reasons and error codes into OpenFeature resolution details. Flag metadata includes the FlagStack environment, environment ID, revision, enabled state and matched rule ID when present.
+
+OpenFeature `datetime` context values are normalized to UTC ISO-8601 strings before FlagStack targeting. Integer evaluation accepts FlagStack number values only when they are mathematically integral; OpenFeature object evaluation accepts JSON arrays and objects rather than scalar JSON values.
+
+Provider initialization and shutdown use the native FlagStack client. Post-initialization configuration refreshes emit OpenFeature `PROVIDER_CONFIGURATION_CHANGED` events with the changed flag keys.
+
 ## Development
 
 ```bash
-python -m pip install -e .
+python -m pip install -e ".[openfeature]"
 python -m unittest discover -s tests -v
 ```
 
