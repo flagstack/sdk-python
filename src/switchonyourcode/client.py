@@ -10,19 +10,19 @@ from typing import Any, Literal, TypeVar, cast
 
 from .config import parse_configuration
 from .errors import (
-    FlagStackAuthenticationError,
-    FlagStackConfigurationError,
-    FlagStackHTTPError,
+    SwitchOnYourCodeAuthenticationError,
+    SwitchOnYourCodeConfigurationError,
+    SwitchOnYourCodeHTTPError,
 )
 from .evaluator import evaluate_flag
 from .types import Configuration, EvaluationContext, EvaluationDetails, FlagKind
 
 RefreshResult = Literal["updated", "not-modified"]
 T = TypeVar("T")
-_SERVER_KEY_PREFIX = "fs_server_"
+_SERVER_KEY_PREFIX = "syoc_server_"
 
 
-class FlagStackClient:
+class SwitchOnYourCodeClient:
     def __init__(
         self,
         *,
@@ -37,9 +37,9 @@ class FlagStackClient:
         normalized_url = base_url.strip().rstrip("/")
         normalized_key = server_key.strip()
         if not normalized_url:
-            raise ValueError("FlagStack base_url is required.")
+            raise ValueError("SwitchOnYourCode base_url is required.")
         if not normalized_key.startswith(_SERVER_KEY_PREFIX):
-            raise ValueError("Python SDK requires a FlagStack server key (fs_server_...).")
+            raise ValueError("Python SDK requires a SwitchOnYourCode server key (syoc_server_...).")
         if poll_interval <= 0:
             raise ValueError("poll_interval must be positive.")
         if timeout <= 0:
@@ -98,39 +98,39 @@ class FlagStackClient:
         except urllib.error.HTTPError as exc:
             if exc.code == 304:
                 if self.configuration is None:
-                    raise FlagStackConfigurationError(
-                        "FlagStack returned 304 before any configuration was loaded."
+                    raise SwitchOnYourCodeConfigurationError(
+                        "SwitchOnYourCode returned 304 before any configuration was loaded."
                     ) from exc
                 return "not-modified"
             if exc.code == 401:
-                raise FlagStackAuthenticationError("FlagStack SDK credential was rejected.") from exc
-            raise FlagStackHTTPError(
+                raise SwitchOnYourCodeAuthenticationError("SwitchOnYourCode SDK credential was rejected.") from exc
+            raise SwitchOnYourCodeHTTPError(
                 exc.code,
-                f"FlagStack configuration request failed with HTTP {exc.code}.",
+                f"SwitchOnYourCode configuration request failed with HTTP {exc.code}.",
             ) from exc
         except urllib.error.URLError as exc:
-            raise FlagStackHTTPError(0, f"FlagStack configuration request failed: {exc.reason}") from exc
+            raise SwitchOnYourCodeHTTPError(0, f"SwitchOnYourCode configuration request failed: {exc.reason}") from exc
 
         try:
             status = getattr(response, "status", response.getcode())
             if status == 304:
                 if self.configuration is None:
-                    raise FlagStackConfigurationError(
-                        "FlagStack returned 304 before any configuration was loaded."
+                    raise SwitchOnYourCodeConfigurationError(
+                        "SwitchOnYourCode returned 304 before any configuration was loaded."
                     )
                 return "not-modified"
             if status == 401:
-                raise FlagStackAuthenticationError("FlagStack SDK credential was rejected.")
+                raise SwitchOnYourCodeAuthenticationError("SwitchOnYourCode SDK credential was rejected.")
             if status < 200 or status >= 300:
-                raise FlagStackHTTPError(
+                raise SwitchOnYourCodeHTTPError(
                     status,
-                    f"FlagStack configuration request failed with HTTP {status}.",
+                    f"SwitchOnYourCode configuration request failed with HTTP {status}.",
                 )
             try:
                 payload = json.loads(response.read().decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                raise FlagStackConfigurationError(
-                    f"FlagStack configuration response was not valid JSON: {exc}"
+                raise SwitchOnYourCodeConfigurationError(
+                    f"SwitchOnYourCode configuration response was not valid JSON: {exc}"
                 ) from exc
             configuration = parse_configuration(payload)
             etag = response.headers.get("ETag")
@@ -154,7 +154,7 @@ class FlagStackClient:
             self._poll_stop.clear()
             self._poll_thread = threading.Thread(
                 target=self._poll_loop,
-                name="flagstack-config-poll",
+                name="switchonyourcode-config-poll",
                 daemon=True,
             )
             self._poll_thread.start()
@@ -170,7 +170,7 @@ class FlagStackClient:
     def close(self) -> None:
         self.stop_polling()
 
-    def __enter__(self) -> FlagStackClient:
+    def __enter__(self) -> SwitchOnYourCodeClient:
         return self
 
     def __exit__(
@@ -235,7 +235,7 @@ class FlagStackClient:
             return _fallback_details(
                 fallback,
                 "PROVIDER_NOT_READY",
-                "FlagStack configuration has not been loaded yet.",
+                "SwitchOnYourCode configuration has not been loaded yet.",
             )
         if flag is None:
             return _fallback_details(

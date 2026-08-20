@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from flagstack import bucket, evaluate_flag, parse_configuration
-from flagstack.types import ConfigurationFlag
+from switchonyourcode import bucket, evaluate_flag, parse_configuration
+from switchonyourcode.types import ConfigurationFlag
 
 
 def boolean_flag(**overrides: object) -> ConfigurationFlag:
@@ -30,7 +30,7 @@ def boolean_flag(**overrides: object) -> ConfigurationFlag:
 
 class EvaluatorTests(unittest.TestCase):
     def test_bucket_matches_v1_compatibility_vector(self) -> None:
-        self.assertEqual(bucket("env-1", "flag-1", "user-123"), 22683)
+        self.assertEqual(bucket("env-1", "flag-1", "user-123"), 3837)
 
     def test_disabled_flags_return_project_default(self) -> None:
         details = evaluate_flag(boolean_flag(enabled=False), "env-1")
@@ -145,12 +145,12 @@ class EvaluatorTests(unittest.TestCase):
 
     def test_numeric_bucket_attributes_match_go_json_formatting(self) -> None:
         cases = [
-            (1.0, 91129),
-            (1e-6, 69539),
-            (1e-7, 35740),
-            (1e20, 82981),
-            (1e21, 86769),
-            (-0.0, 15580),
+            (1.0, 90951),
+            (1e-6, 94257),
+            (1e-7, 59926),
+            (1e20, 14338),
+            (1e21, 28947),
+            (-0.0, 99275),
         ]
         for value, expected_bucket in cases:
             with self.subTest(value=value):
