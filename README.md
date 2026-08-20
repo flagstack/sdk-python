@@ -2,56 +2,125 @@
 
 Official Python SDK for [FlagStack](https://github.com/flagstack/flagstack).
 
-> **Status:** Planned / early development. Not yet ready for production use.
+> **Status:** Early development. The package is not yet published for production use.
 
-## Goals
+The SDK downloads FlagStack schema-v1 configuration with a server SDK key and evaluates flags locally in-process. Targeting, reusable segments, variants and percentage rollouts therefore do not require a network request for each evaluation.
 
-The Python SDK will provide first-class FlagStack support for Python applications, including:
+## Requirements
 
-- synchronous applications;
-- native asynchronous applications;
-- Django;
-- FastAPI;
-- Celery workers;
-- long-running services and bots;
-- local feature-flag evaluation;
-- real-time configuration updates;
-- resilient cached configuration when FlagStack is temporarily unavailable;
-- OpenFeature integration.
+Python 3.11 or newer. The runtime SDK uses only the Python standard library.
 
-## Planned usage
-
-The final API is still to be designed, but the aim is to provide a small, idiomatic Python interface suitable for both sync and async applications.
+## Basic usage
 
 ```python
-from flagstack import FlagStack
+from flagstack import FlagStackClient
 
-client = FlagStack(...)
+flags = FlagStackClient(
+    base_url="https://flags.example.com",
+    server_key="fs_server_...",
+)
 
-if client.is_enabled("new-checkout"):
-    ...
+flags.initialize()
+
+enabled = flags.get_boolean_value(
+    "new-checkout",
+    False,
+    {
+        "targetingKey": "user-123",
+        "country": "GB",
+        "plan": "enterprise",
+    },
+)
 ```
 
-The example above is illustrative only and is not yet a stable API.
+`initialize()` performs the first configuration refresh and starts background polling. Use `initialize(start_polling=False)` for short-lived processes, CLIs and serverless functions that should not keep a polling thread alive.
 
-## Package
+The client also supports string, number and JSON flags:
 
-The intended Python package name is:
+```python
+layout = flags.get_string_value(
+    "checkout-layout",
+    "control",
+    {"targetingKey": "user-123"},
+)
+```
+
+Call `close()` during application shutdown, or use the client as a context manager when its lifetime is scoped:
+
+```python
+with FlagStackClient(
+    base_url="https://flags.example.com",
+    server_key="fs_server_...",
+) as flags:
+    flags.initialize(start_polling=False)
+    enabled = flags.get_boolean_value("new-checkout", False)
+```
+
+## Configuration delivery
+
+The client calls:
+
+```text
+GET /sdk/v1/config
+Authorization: Bearer fs_server_...
+```
+
+It uses strong ETag revalidation. A `304 Not Modified` keeps the current in-memory configuration without reparsing it. A failed later refresh never replaces the last known-good configuration.
+
+## Local evaluation
+
+The Python evaluator implements the same FlagStack v1 contract as the JavaScript SDK:
+
+- boolean, string, number and JSON values;
+- ordered rules;
+- arbitrary nested context attributes;
+- reusable and nested segments;
+- deterministic SHA-256 percentage bucketing;
+- multivariate variants;
+- semantic-version comparisons;
+- RE2-compatible regular-expression rules;
+- OpenFeature-style resolution reasons and error codes.
+
+The compatibility vector is fixed:
+
+```text
+bucket("env-1", "flag-1", "user-123") == 22683
+```
+
+Python's built-in regex engine accepts constructs that RE2 does not. The SDK validates regex targeting against the RE2-compatible subset before compiling it, so Python cannot silently broaden the rule language.
+
+## Detailed evaluation
+
+Every typed getter has a matching details method:
+
+```python
+details = flags.get_boolean_details(
+    "new-checkout",
+    False,
+    {"targetingKey": "user-123"},
+)
+
+print(details.value)
+print(details.variant)
+print(details.reason)
+print(details.rule_id)
+```
+
+When the provider is not ready, a flag is missing, or the requested type does not match the flag, the SDK returns the caller-provided fallback and exposes the failure through the details object.
+
+## Development
 
 ```bash
-pip install flagstack
+python -m pip install -e .
+python -m unittest discover -s tests -v
 ```
 
-Publishing and compatibility details will be documented once the initial SDK is implemented.
-
-## Contributing
-
-Organisation-wide contribution guidelines are maintained in [`flagstack/.github`](https://github.com/flagstack/.github). FlagStack uses a linear Git history and integrates pull requests by rebase only.
+CI validates the SDK on Python 3.11, 3.12, 3.13 and 3.14.
 
 ## Related repositories
 
 - [FlagStack](https://github.com/flagstack/flagstack)
-- [JavaScript / TypeScript SDK](https://github.com/flagstack/sdk-js)
+- [JavaScript SDK](https://github.com/flagstack/sdk-js)
 - [Go SDK](https://github.com/flagstack/sdk-go)
 - [.NET SDK](https://github.com/flagstack/sdk-dotnet)
 
