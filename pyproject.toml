@@ -24,6 +24,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+openfeature = ["openfeature-sdk>=0.10,<0.11"]
+
 [project.urls]
 Homepage = "https://github.com/flagstack/flagstack"
 Repository = "https://github.com/flagstack/sdk-python"
