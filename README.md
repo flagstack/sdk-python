@@ -1,10 +1,10 @@
-# FlagStack Python SDK
+# Switch On Your Code Python SDK
 
-Official Python SDK for [FlagStack](https://github.com/flagstack/flagstack).
+Official Python SDK for [Switch On Your Code](https://github.com/switchonyourcode/switchonyourcode).
 
 > **Status:** Early development. The package is not yet published for production use.
 
-The SDK downloads FlagStack schema-v1 configuration with a server SDK key and evaluates flags locally in-process. Targeting, reusable segments, variants and percentage rollouts therefore do not require a network request for each evaluation.
+The SDK downloads Switch On Your Code schema-v1 configuration with a server SDK key and evaluates flags locally in-process. Targeting, reusable segments, variants and percentage rollouts therefore do not require a network request for each evaluation.
 
 ## Requirements
 
@@ -13,11 +13,11 @@ Python 3.11 or newer. The native runtime SDK uses only the Python standard libra
 ## Basic usage
 
 ```python
-from flagstack import FlagStackClient
+from switchonyourcode import SwitchOnYourCodeClient
 
-flags = FlagStackClient(
+flags = SwitchOnYourCodeClient(
     base_url="https://flags.example.com",
-    server_key="fs_server_...",
+    server_key="syoc_server_...",
 )
 
 flags.initialize()
@@ -48,9 +48,9 @@ layout = flags.get_string_value(
 Call `close()` during application shutdown, or use the client as a context manager when its lifetime is scoped:
 
 ```python
-with FlagStackClient(
+with SwitchOnYourCodeClient(
     base_url="https://flags.example.com",
-    server_key="fs_server_...",
+    server_key="syoc_server_...",
 ) as flags:
     flags.initialize(start_polling=False)
     enabled = flags.get_boolean_value("new-checkout", False)
@@ -62,14 +62,14 @@ The client calls:
 
 ```text
 GET /sdk/v1/config
-Authorization: Bearer fs_server_...
+Authorization: Bearer syoc_server_...
 ```
 
 It uses strong ETag revalidation. A `304 Not Modified` keeps the current in-memory configuration without reparsing it. A failed later refresh never replaces the last known-good configuration.
 
 ## Local evaluation
 
-The Python evaluator implements the same FlagStack v1 contract as the JavaScript SDK and Go control-plane evaluator:
+The Python evaluator implements the same Switch On Your Code v1 contract as the JavaScript SDK and Go control-plane evaluator:
 
 - boolean, string, number and JSON values;
 - ordered rules;
@@ -84,7 +84,7 @@ The Python evaluator implements the same FlagStack v1 contract as the JavaScript
 The compatibility vector is fixed:
 
 ```text
-bucket("env-1", "flag-1", "user-123") == 22683
+bucket("env-1", "flag-1", "user-123") == 3837
 ```
 
 Custom scalar `bucket_by` attributes are serialized using the Go reference evaluator's JSON representation before hashing, so Python-specific number or string formatting does not move users between rollout cohorts.
@@ -112,23 +112,23 @@ When the provider is not ready, a flag is missing, or the requested type does no
 
 ## OpenFeature
 
-OpenFeature support is optional so the native `flagstack` install remains standard-library-only:
+OpenFeature support is optional so the native `switchonyourcode` install remains standard-library-only:
 
 ```bash
-pip install "flagstack[openfeature]"
+pip install "switchonyourcode[openfeature]"
 ```
 
-Register `FlagStackProvider` with the OpenFeature Python SDK:
+Register `SwitchOnYourCodeProvider` with the OpenFeature Python SDK:
 
 ```python
 from openfeature import api
 from openfeature.evaluation_context import EvaluationContext
-from flagstack.openfeature import FlagStackProvider
+from switchonyourcode.openfeature import SwitchOnYourCodeProvider
 
 api.set_provider_and_wait(
-    FlagStackProvider(
+    SwitchOnYourCodeProvider(
         base_url="https://flags.example.com",
-        server_key="fs_server_...",
+        server_key="syoc_server_...",
     )
 )
 
@@ -144,11 +144,11 @@ enabled = client.get_boolean_value(
 )
 ```
 
-The provider maps FlagStack values, variants, reasons and error codes into OpenFeature resolution details. Flag metadata includes the FlagStack environment, environment ID, revision, enabled state and matched rule ID when present.
+The provider maps Switch On Your Code values, variants, reasons and error codes into OpenFeature resolution details. Flag metadata includes the Switch On Your Code environment, environment ID, revision, enabled state and matched rule ID when present.
 
-OpenFeature `datetime` context values are normalized to UTC ISO-8601 strings before FlagStack targeting. Integer evaluation accepts FlagStack number values only when they are mathematically integral; OpenFeature object evaluation accepts JSON arrays and objects rather than scalar JSON values.
+OpenFeature `datetime` context values are normalized to UTC ISO-8601 strings before Switch On Your Code targeting. Integer evaluation accepts Switch On Your Code number values only when they are mathematically integral; OpenFeature object evaluation accepts JSON arrays and objects rather than scalar JSON values.
 
-Provider initialization and shutdown use the native FlagStack client. Post-initialization configuration refreshes emit OpenFeature `PROVIDER_CONFIGURATION_CHANGED` events with the changed flag keys.
+Provider initialization and shutdown use the native Switch On Your Code client. Post-initialization configuration refreshes emit OpenFeature `PROVIDER_CONFIGURATION_CHANGED` events with the changed flag keys.
 
 ## Development
 
@@ -161,10 +161,10 @@ CI validates the SDK on Python 3.11, 3.12, 3.13 and 3.14.
 
 ## Related repositories
 
-- [FlagStack](https://github.com/flagstack/flagstack)
-- [JavaScript SDK](https://github.com/flagstack/sdk-js)
-- [Go SDK](https://github.com/flagstack/sdk-go)
-- [.NET SDK](https://github.com/flagstack/sdk-dotnet)
+- [Switch On Your Code](https://github.com/switchonyourcode/switchonyourcode)
+- [JavaScript SDK](https://github.com/switchonyourcode/sdk-js)
+- [Go SDK](https://github.com/switchonyourcode/sdk-go)
+- [.NET SDK](https://github.com/switchonyourcode/sdk-dotnet)
 
 ## Licence
 

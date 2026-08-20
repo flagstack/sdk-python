@@ -11,14 +11,14 @@ from openfeature.exception import ErrorCode
 from openfeature.flag_evaluation import FlagResolutionDetails, Reason
 from openfeature.provider import AbstractProvider, Metadata
 
-from .client import FlagStackClient
+from .client import SwitchOnYourCodeClient
 from .types import Configuration, EvaluationContext, EvaluationDetails
 
 T = TypeVar("T")
 
 
-class FlagStackProvider(AbstractProvider):
-    """OpenFeature provider backed by the FlagStack Python SDK."""
+class SwitchOnYourCodeProvider(AbstractProvider):
+    """OpenFeature provider backed by the SwitchOnYourCode Python SDK."""
 
     def __init__(
         self,
@@ -33,7 +33,7 @@ class FlagStackProvider(AbstractProvider):
         self._start_polling = start_polling
         self._initialized = False
         self._last_configuration: Configuration | None = None
-        self._client = FlagStackClient(
+        self._client = SwitchOnYourCodeClient(
             base_url=base_url,
             server_key=server_key,
             poll_interval=poll_interval,
@@ -42,7 +42,7 @@ class FlagStackProvider(AbstractProvider):
         )
 
     @property
-    def client(self) -> FlagStackClient:
+    def client(self) -> SwitchOnYourCodeClient:
         return self._client
 
     def initialize(self, evaluation_context: OpenFeatureEvaluationContext) -> None:
@@ -54,7 +54,7 @@ class FlagStackProvider(AbstractProvider):
         self._client.close()
 
     def get_metadata(self) -> Metadata:
-        return Metadata(name="FlagStack")
+        return Metadata(name="Switch On Your Code")
 
     def resolve_boolean_details(
         self,
@@ -179,13 +179,13 @@ class FlagStackProvider(AbstractProvider):
         if flag is None:
             return {}
         metadata: dict[str, bool | int | float | str] = {
-            "flagstack.environment": configuration.environment.key,
-            "flagstack.environment_id": configuration.environment.id,
-            "flagstack.revision": flag.revision,
-            "flagstack.enabled": flag.enabled,
+            "switchonyourcode.environment": configuration.environment.key,
+            "switchonyourcode.environment_id": configuration.environment.id,
+            "switchonyourcode.revision": flag.revision,
+            "switchonyourcode.enabled": flag.enabled,
         }
         if rule_id is not None:
-            metadata["flagstack.rule_id"] = rule_id
+            metadata["switchonyourcode.rule_id"] = rule_id
         return metadata
 
     def _configuration_changed(self, configuration: Configuration) -> None:
@@ -203,7 +203,7 @@ class FlagStackProvider(AbstractProvider):
         self.emit_provider_configuration_changed(
             ProviderEventDetails(
                 flags_changed=changed,
-                metadata={"flagstack.environment": configuration.environment.key},
+                metadata={"switchonyourcode.environment": configuration.environment.key},
             )
         )
 

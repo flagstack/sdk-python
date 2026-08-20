@@ -3,23 +3,23 @@ from __future__ import annotations
 from .types import EvaluationErrorCode
 
 
-class FlagStackError(Exception):
-    """Base exception for FlagStack SDK failures."""
+class SwitchOnYourCodeError(Exception):
+    """Base exception for SwitchOnYourCode SDK failures."""
 
 
-class FlagStackAuthenticationError(FlagStackError):
+class SwitchOnYourCodeAuthenticationError(SwitchOnYourCodeError):
     """Raised when an SDK credential is rejected."""
 
 
-class FlagStackHTTPError(FlagStackError):
-    """Raised for unexpected HTTP responses from FlagStack."""
+class SwitchOnYourCodeHTTPError(SwitchOnYourCodeError):
+    """Raised for unexpected HTTP responses from SwitchOnYourCode."""
 
     def __init__(self, status: int, message: str) -> None:
         super().__init__(message)
         self.status = status
 
 
-class FlagStackConfigurationError(FlagStackError):
+class SwitchOnYourCodeConfigurationError(SwitchOnYourCodeError):
     """Raised when a downloaded configuration is invalid or unsupported."""
 
 

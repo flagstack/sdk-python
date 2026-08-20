@@ -1,11 +1,11 @@
 from .bucket import bucket
-from .client import FlagStackClient, RefreshResult
+from .client import SwitchOnYourCodeClient, RefreshResult
 from .config import parse_configuration
 from .errors import (
-    FlagStackAuthenticationError,
-    FlagStackConfigurationError,
-    FlagStackError,
-    FlagStackHTTPError,
+    SwitchOnYourCodeAuthenticationError,
+    SwitchOnYourCodeConfigurationError,
+    SwitchOnYourCodeError,
+    SwitchOnYourCodeHTTPError,
 )
 from .evaluator import evaluate_flag
 from .types import (
@@ -41,11 +41,11 @@ __all__ = [
     "EvaluationErrorCode",
     "EvaluationReason",
     "FlagKind",
-    "FlagStackAuthenticationError",
-    "FlagStackClient",
-    "FlagStackConfigurationError",
-    "FlagStackError",
-    "FlagStackHTTPError",
+    "SwitchOnYourCodeAuthenticationError",
+    "SwitchOnYourCodeClient",
+    "SwitchOnYourCodeConfigurationError",
+    "SwitchOnYourCodeError",
+    "SwitchOnYourCodeHTTPError",
     "Outcome",
     "Policy",
     "RefreshResult",
