@@ -6,8 +6,10 @@ from .errors import (
     SwitchOnYourCodeConfigurationError,
     SwitchOnYourCodeError,
     SwitchOnYourCodeHTTPError,
+    SwitchOnYourCodeRealtimeError,
 )
 from .evaluator import evaluate_flag
+from .realtime import SwitchOnYourCodeRealtimeStream
 from .types import (
     BUCKET_SCALE,
     SCHEMA_VERSION,
@@ -46,6 +48,8 @@ __all__ = [
     "SwitchOnYourCodeConfigurationError",
     "SwitchOnYourCodeError",
     "SwitchOnYourCodeHTTPError",
+    "SwitchOnYourCodeRealtimeError",
+    "SwitchOnYourCodeRealtimeStream",
     "Outcome",
     "Policy",
     "RefreshResult",

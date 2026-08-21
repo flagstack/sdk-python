@@ -4,7 +4,7 @@ from .types import EvaluationErrorCode
 
 
 class SwitchOnYourCodeError(Exception):
-    """Base exception for SwitchOnYourCode SDK failures."""
+    """Base exception for Switch On Your Code SDK failures."""
 
 
 class SwitchOnYourCodeAuthenticationError(SwitchOnYourCodeError):
@@ -12,7 +12,7 @@ class SwitchOnYourCodeAuthenticationError(SwitchOnYourCodeError):
 
 
 class SwitchOnYourCodeHTTPError(SwitchOnYourCodeError):
-    """Raised for unexpected HTTP responses from SwitchOnYourCode."""
+    """Raised for unexpected HTTP responses from Switch On Your Code."""
 
     def __init__(self, status: int, message: str) -> None:
         super().__init__(message)
@@ -21,6 +21,10 @@ class SwitchOnYourCodeHTTPError(SwitchOnYourCodeError):
 
 class SwitchOnYourCodeConfigurationError(SwitchOnYourCodeError):
     """Raised when a downloaded configuration is invalid or unsupported."""
+
+
+class SwitchOnYourCodeRealtimeError(SwitchOnYourCodeError):
+    """Raised when the realtime event stream is invalid or unusable."""
 
 
 class EvaluationFailure(Exception):

@@ -15,11 +15,13 @@ from .errors import (
     SwitchOnYourCodeHTTPError,
 )
 from .evaluator import evaluate_flag
+from .realtime import SwitchOnYourCodeRealtimeStream
 from .types import Configuration, EvaluationContext, EvaluationDetails, FlagKind
 
 RefreshResult = Literal["updated", "not-modified"]
 T = TypeVar("T")
 _SERVER_KEY_PREFIX = "syoc_server_"
+_DEFAULT_FALLBACK_POLL_INTERVAL = 5 * 60.0
 
 
 class SwitchOnYourCodeClient:
@@ -28,8 +30,10 @@ class SwitchOnYourCodeClient:
         *,
         base_url: str,
         server_key: str,
-        poll_interval: float = 30.0,
+        poll_interval: float = _DEFAULT_FALLBACK_POLL_INTERVAL,
         timeout: float = 10.0,
+        realtime_reconnect_delay: float = 5.0,
+        realtime_timeout: float = 30.0,
         opener: Callable[..., Any] | None = None,
         on_error: Callable[[BaseException], None] | None = None,
         on_configuration_changed: Callable[[Configuration], None] | None = None,
@@ -56,8 +60,18 @@ class SwitchOnYourCodeClient:
         self._etag: str | None = None
         self._flags: dict[str, Any] = {}
         self._lock = threading.RLock()
+        self._refresh_lock = threading.Lock()
         self._poll_stop = threading.Event()
         self._poll_thread: threading.Thread | None = None
+        self._realtime = SwitchOnYourCodeRealtimeStream(
+            base_url=normalized_url,
+            server_key=normalized_key,
+            opener=self._opener,
+            reconnect_delay=realtime_reconnect_delay,
+            timeout=realtime_timeout,
+            on_configuration_changed=self.refresh,
+            on_error=on_error,
+        )
 
     @property
     def configuration(self) -> Configuration | None:
@@ -73,13 +87,30 @@ class SwitchOnYourCodeClient:
     def ready(self) -> bool:
         return self.configuration is not None
 
-    def initialize(self, *, start_polling: bool = True) -> RefreshResult:
+    @property
+    def realtime_running(self) -> bool:
+        return self._realtime.running
+
+    def initialize(
+        self,
+        *,
+        start_polling: bool = True,
+        start_realtime: bool | None = None,
+    ) -> RefreshResult:
         result = self.refresh()
+        if start_realtime is None:
+            start_realtime = start_polling
+        if start_realtime:
+            self.start_realtime()
         if start_polling:
             self.start_polling()
         return result
 
     def refresh(self) -> RefreshResult:
+        with self._refresh_lock:
+            return self._refresh_once()
+
+    def _refresh_once(self) -> RefreshResult:
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self._server_key}",
@@ -170,7 +201,14 @@ class SwitchOnYourCodeClient:
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=min(self._poll_interval + self._timeout, 1.0))
 
+    def start_realtime(self) -> None:
+        self._realtime.start()
+
+    def stop_realtime(self) -> None:
+        self._realtime.stop()
+
     def close(self) -> None:
+        self.stop_realtime()
         self.stop_polling()
 
     def __enter__(self) -> SwitchOnYourCodeClient:
