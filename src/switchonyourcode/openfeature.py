@@ -18,7 +18,7 @@ T = TypeVar("T")
 
 
 class SwitchOnYourCodeProvider(AbstractProvider):
-    """OpenFeature provider backed by the SwitchOnYourCode Python SDK."""
+    """OpenFeature provider backed by the Switch On Your Code Python SDK."""
 
     def __init__(
         self,
