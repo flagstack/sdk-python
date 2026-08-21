@@ -94,9 +94,11 @@ class SwitchOnYourCodeClient:
         self,
         *,
         start_polling: bool = True,
-        start_realtime: bool = True,
+        start_realtime: bool | None = None,
     ) -> RefreshResult:
         result = self.refresh()
+        if start_realtime is None:
+            start_realtime = start_polling
         if start_realtime:
             self.start_realtime()
         if start_polling:
