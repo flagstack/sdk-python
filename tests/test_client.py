@@ -54,7 +54,7 @@ class FakeResponse:
 
 class ClientTests(unittest.TestCase):
     def test_server_key_is_required(self) -> None:
-        with self.assertRaisesRegex(ValueError, "fs_server"):
+        with self.assertRaisesRegex(ValueError, "syoc_server"):
             SwitchOnYourCodeClient(base_url="https://flags.example.com", server_key="syoc_client_public")
 
     def test_refresh_loads_configuration_and_evaluates_locally(self) -> None:
