@@ -60,6 +60,7 @@ class SwitchOnYourCodeClient:
         self._etag: str | None = None
         self._flags: dict[str, Any] = {}
         self._lock = threading.RLock()
+        self._refresh_lock = threading.Lock()
         self._poll_stop = threading.Event()
         self._poll_thread: threading.Thread | None = None
         self._realtime = SwitchOnYourCodeRealtimeStream(
@@ -106,6 +107,10 @@ class SwitchOnYourCodeClient:
         return result
 
     def refresh(self) -> RefreshResult:
+        with self._refresh_lock:
+            return self._refresh_once()
+
+    def _refresh_once(self) -> RefreshResult:
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self._server_key}",
