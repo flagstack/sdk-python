@@ -37,9 +37,9 @@ class SwitchOnYourCodeClient:
         normalized_url = base_url.strip().rstrip("/")
         normalized_key = server_key.strip()
         if not normalized_url:
-            raise ValueError("SwitchOnYourCode base_url is required.")
+            raise ValueError("Switch On Your Code base_url is required.")
         if not normalized_key.startswith(_SERVER_KEY_PREFIX):
-            raise ValueError("Python SDK requires a SwitchOnYourCode server key (syoc_server_...).")
+            raise ValueError("Python SDK requires a Switch On Your Code server key (syoc_server_...).")
         if poll_interval <= 0:
             raise ValueError("poll_interval must be positive.")
         if timeout <= 0:
@@ -99,38 +99,41 @@ class SwitchOnYourCodeClient:
             if exc.code == 304:
                 if self.configuration is None:
                     raise SwitchOnYourCodeConfigurationError(
-                        "SwitchOnYourCode returned 304 before any configuration was loaded."
+                        "Switch On Your Code returned 304 before any configuration was loaded."
                     ) from exc
                 return "not-modified"
             if exc.code == 401:
-                raise SwitchOnYourCodeAuthenticationError("SwitchOnYourCode SDK credential was rejected.") from exc
+                raise SwitchOnYourCodeAuthenticationError("Switch On Your Code SDK credential was rejected.") from exc
             raise SwitchOnYourCodeHTTPError(
                 exc.code,
-                f"SwitchOnYourCode configuration request failed with HTTP {exc.code}.",
+                f"Switch On Your Code configuration request failed with HTTP {exc.code}.",
             ) from exc
         except urllib.error.URLError as exc:
-            raise SwitchOnYourCodeHTTPError(0, f"SwitchOnYourCode configuration request failed: {exc.reason}") from exc
+            raise SwitchOnYourCodeHTTPError(
+                0,
+                f"Switch On Your Code configuration request failed: {exc.reason}",
+            ) from exc
 
         try:
             status = getattr(response, "status", response.getcode())
             if status == 304:
                 if self.configuration is None:
                     raise SwitchOnYourCodeConfigurationError(
-                        "SwitchOnYourCode returned 304 before any configuration was loaded."
+                        "Switch On Your Code returned 304 before any configuration was loaded."
                     )
                 return "not-modified"
             if status == 401:
-                raise SwitchOnYourCodeAuthenticationError("SwitchOnYourCode SDK credential was rejected.")
+                raise SwitchOnYourCodeAuthenticationError("Switch On Your Code SDK credential was rejected.")
             if status < 200 or status >= 300:
                 raise SwitchOnYourCodeHTTPError(
                     status,
-                    f"SwitchOnYourCode configuration request failed with HTTP {status}.",
+                    f"Switch On Your Code configuration request failed with HTTP {status}.",
                 )
             try:
                 payload = json.loads(response.read().decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                 raise SwitchOnYourCodeConfigurationError(
-                    f"SwitchOnYourCode configuration response was not valid JSON: {exc}"
+                    f"Switch On Your Code configuration response was not valid JSON: {exc}"
                 ) from exc
             configuration = parse_configuration(payload)
             etag = response.headers.get("ETag")
@@ -235,7 +238,7 @@ class SwitchOnYourCodeClient:
             return _fallback_details(
                 fallback,
                 "PROVIDER_NOT_READY",
-                "SwitchOnYourCode configuration has not been loaded yet.",
+                "Switch On Your Code configuration has not been loaded yet.",
             )
         if flag is None:
             return _fallback_details(
