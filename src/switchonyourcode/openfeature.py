@@ -25,12 +25,16 @@ class SwitchOnYourCodeProvider(AbstractProvider):
         *,
         base_url: str,
         server_key: str,
-        poll_interval: float = 30.0,
+        poll_interval: float = 5 * 60.0,
         timeout: float = 10.0,
+        realtime_reconnect_delay: float = 5.0,
+        realtime_timeout: float = 30.0,
         start_polling: bool = True,
+        start_realtime: bool | None = None,
     ) -> None:
         super().__init__()
         self._start_polling = start_polling
+        self._start_realtime = start_realtime
         self._initialized = False
         self._last_configuration: Configuration | None = None
         self._client = SwitchOnYourCodeClient(
@@ -38,6 +42,8 @@ class SwitchOnYourCodeProvider(AbstractProvider):
             server_key=server_key,
             poll_interval=poll_interval,
             timeout=timeout,
+            realtime_reconnect_delay=realtime_reconnect_delay,
+            realtime_timeout=realtime_timeout,
             on_configuration_changed=self._configuration_changed,
         )
 
@@ -46,7 +52,10 @@ class SwitchOnYourCodeProvider(AbstractProvider):
         return self._client
 
     def initialize(self, evaluation_context: OpenFeatureEvaluationContext) -> None:
-        self._client.initialize(start_polling=self._start_polling)
+        self._client.initialize(
+            start_polling=self._start_polling,
+            start_realtime=self._start_realtime,
+        )
         self._initialized = True
 
     def shutdown(self) -> None:
