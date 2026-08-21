@@ -23,20 +23,31 @@ from .validation import validate_evaluation_configuration
 
 
 def parse_configuration(payload: object) -> Configuration:
-    root = _record(payload, "SwitchOnYourCode configuration must be an object.")
+    root = _record(payload, "Switch On Your Code configuration must be an object.")
     if root.get("schema_version") != SCHEMA_VERSION:
         raise SwitchOnYourCodeConfigurationError(
-            f"Unsupported SwitchOnYourCode schema version {root.get('schema_version')!r}."
+            f"Unsupported Switch On Your Code schema version {root.get('schema_version')!r}."
         )
 
-    environment_raw = _record(root.get("environment"), "SwitchOnYourCode configuration environment is invalid.")
-    environment_id = _non_empty_string(environment_raw.get("id"), "SwitchOnYourCode environment id is invalid.")
-    environment_key = _non_empty_string(environment_raw.get("key"), "SwitchOnYourCode environment key is invalid.")
+    environment_raw = _record(
+        root.get("environment"),
+        "Switch On Your Code configuration environment is invalid.",
+    )
+    environment_id = _non_empty_string(
+        environment_raw.get("id"),
+        "Switch On Your Code environment id is invalid.",
+    )
+    environment_key = _non_empty_string(
+        environment_raw.get("key"),
+        "Switch On Your Code environment key is invalid.",
+    )
 
     flags_raw = root.get("flags")
     segments_raw = root.get("segments")
     if not isinstance(flags_raw, list) or not isinstance(segments_raw, list):
-        raise SwitchOnYourCodeConfigurationError("SwitchOnYourCode configuration flags and segments must be arrays.")
+        raise SwitchOnYourCodeConfigurationError(
+            "Switch On Your Code configuration flags and segments must be arrays."
+        )
 
     configuration = Configuration(
         schema_version=SCHEMA_VERSION,
@@ -48,7 +59,7 @@ def parse_configuration(payload: object) -> Configuration:
         validate_evaluation_configuration(configuration)
     except Exception as exc:
         raise SwitchOnYourCodeConfigurationError(
-            f"SwitchOnYourCode configuration is not compatible with the v1 evaluator: {exc}"
+            f"Switch On Your Code configuration is not compatible with the v1 evaluator: {exc}"
         ) from exc
     return configuration
 
