@@ -12,6 +12,8 @@ from .errors import (
     SwitchOnYourCodeRealtimeError,
 )
 
+_SERVER_KEY_PREFIX = "syoc_server_"
+
 
 class _ServerSentEvent:
     def __init__(self, event: str, data: str) -> None:
@@ -37,8 +39,10 @@ class SwitchOnYourCodeRealtimeStream:
         normalized_key = server_key.strip()
         if not normalized_url:
             raise ValueError("Switch On Your Code realtime base_url is required.")
-        if not normalized_key:
-            raise ValueError("Switch On Your Code realtime server_key is required.")
+        if not normalized_key.startswith(_SERVER_KEY_PREFIX):
+            raise ValueError(
+                "Python realtime SDK requires a Switch On Your Code server key (syoc_server_...)."
+            )
         if reconnect_delay <= 0:
             raise ValueError("reconnect_delay must be positive.")
         if timeout <= 0:
@@ -80,9 +84,8 @@ class SwitchOnYourCodeRealtimeStream:
     def stop(self) -> None:
         with self._lock:
             thread = self._thread
+            refresh_thread = self._refresh_thread
             response = self._response
-            self._thread = None
-            self._response = None
             self._refresh_pending = False
             self._stop.set()
 
@@ -91,11 +94,23 @@ class SwitchOnYourCodeRealtimeStream:
             if callable(close):
                 try:
                     close()
-                except OSError:
+                except (OSError, ValueError):
                     pass
 
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=1.0)
+        if refresh_thread is not None and refresh_thread is not threading.current_thread():
+            refresh_thread.join(timeout=1.0)
+
+        with self._lock:
+            if self._thread is thread and (thread is None or not thread.is_alive()):
+                self._thread = None
+            if self._refresh_thread is refresh_thread and (
+                refresh_thread is None or not refresh_thread.is_alive()
+            ):
+                self._refresh_thread = None
+            if self._response is response:
+                self._response = None
 
     def close(self) -> None:
         self.stop()
@@ -205,7 +220,7 @@ class SwitchOnYourCodeRealtimeStream:
                     if callable(close):
                         try:
                             close()
-                        except OSError:
+                        except (OSError, ValueError):
                             pass
 
             self._stop.wait(reconnect_delay)
