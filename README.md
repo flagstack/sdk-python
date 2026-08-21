@@ -33,7 +33,9 @@ enabled = flags.get_boolean_value(
 )
 ```
 
-`initialize()` performs the first configuration refresh and starts background polling. Use `initialize(start_polling=False)` for short-lived processes, CLIs and serverless functions that should not keep a polling thread alive.
+`initialize()` performs the first configuration refresh, starts authenticated realtime invalidation through Server-Sent Events (SSE), and retains a five-minute polling interval as a safety net.
+
+For short-lived processes, CLIs and serverless functions, `initialize(start_polling=False)` preserves the existing no-background-work behaviour and disables both polling and realtime by default. Realtime can still be requested explicitly with `initialize(start_polling=False, start_realtime=True)`.
 
 The client also supports string, number and JSON flags:
 
@@ -58,7 +60,7 @@ with SwitchOnYourCodeClient(
 
 ## Configuration delivery
 
-The client calls:
+The authoritative configuration path remains:
 
 ```text
 GET /sdk/v1/config
@@ -66,6 +68,31 @@ Authorization: Bearer syoc_server_...
 ```
 
 It uses strong ETag revalidation. A `304 Not Modified` keeps the current in-memory configuration without reparsing it. A failed later refresh never replaces the last known-good configuration.
+
+Realtime delivery uses the authenticated SSE endpoint:
+
+```text
+GET /sdk/v1/events
+Authorization: Bearer syoc_server_...
+Accept: text/event-stream
+```
+
+SSE events are invalidation signals only. A `configuration_changed` event causes the SDK to call `/sdk/v1/config` through the same ETag-aware refresh path; configuration documents are never installed directly from the event stream.
+
+The SDK reconnects after transient stream closure or network errors, honours valid server `retry:` hints, ignores keepalive comments, and stops reconnecting after the server reports `credential_revoked`. Bursts of invalidations are coalesced while a refresh is already in flight so one noisy update cannot create overlapping refresh storms.
+
+The event stream uses a separate 30-second network timeout by default, which comfortably accommodates the server's 15-second keepalive cadence. `realtime_reconnect_delay` and `realtime_timeout` can be customized on the client.
+
+Explicit lifecycle methods are also available:
+
+```python
+flags.start_realtime()
+flags.stop_realtime()
+flags.start_polling()
+flags.stop_polling()
+```
+
+`close()` stops both background mechanisms.
 
 ## Local evaluation
 
@@ -148,7 +175,7 @@ The provider maps Switch On Your Code values, variants, reasons and error codes 
 
 OpenFeature `datetime` context values are normalized to UTC ISO-8601 strings before Switch On Your Code targeting. Integer evaluation accepts Switch On Your Code number values only when they are mathematically integral; OpenFeature object evaluation accepts JSON arrays and objects rather than scalar JSON values.
 
-Provider initialization and shutdown use the native Switch On Your Code client. Post-initialization configuration refreshes emit OpenFeature `PROVIDER_CONFIGURATION_CHANGED` events with the changed flag keys.
+Provider initialization and shutdown use the native Switch On Your Code client. Realtime invalidation is enabled alongside a five-minute polling safety net by default, and post-initialization configuration refreshes emit OpenFeature `PROVIDER_CONFIGURATION_CHANGED` events with the changed flag keys. Set `start_polling=False` to retain the no-background-work lifecycle, or set `start_realtime` explicitly when different behaviour is required.
 
 ## Development
 
