@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "switchonyourcode"
 version = "0.0.0"
-description = "Official Python SDK for SwitchOnYourCode feature flags."
+description = "Official Python SDK for Switch On Your Code feature flags."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
